@@ -3,14 +3,20 @@ package main
 import (
 	"os"
 	"fmt"
+	"flag"
 )
 
 var (
 	packetSize = 188
+
+	verbose = flag.Bool("v", false, "show fragment file informations")
+	filename = flag.String("i", "", "input fragment file")
 )
 
 func main() {
-	f, err := os.Open("./frag.ts")
+	flag.Parse()
+	
+	f, err := os.Open(*filename)
 	if err != nil {
 		fmt.Errorf("error opening file, %s", err)
 	}
@@ -20,8 +26,6 @@ func main() {
 		return
 	}
 
-	fmt.Println("Mpeg-ts file analysis")
-	
 	var pmtPid uint16
 	streamsPacketsCount := make(map[uint16]int)
 
@@ -53,8 +57,10 @@ func main() {
 		}
 	}
 
+	if *verbose {
 	fmt.Println(" Total number of packets", packetsNum)
-	for k, v := range streamsPacketsCount { 
-		fmt.Printf(" stream %v packets %v\n", k, v)
+		for k, v := range streamsPacketsCount {
+			fmt.Printf(" stream %v packets %v\n", k, v)
+		}
 	}
 }
