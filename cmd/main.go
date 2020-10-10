@@ -60,7 +60,7 @@ func main() {
 
 		p.ReadPacket(buff)
 
-		p.pid = ((uint16(buff[1]) & 0x1f) << 8) | uint16(buff[2])
+		// p.pid = ((uint16(buff[1]) & 0x1f) << 8) | uint16(buff[2])
 		// cc := uint8(packet[3]) & 0xf
 
 		if p.pid == 0 {
