@@ -17,7 +17,10 @@ var (
 type Packet struct {
 	buff []byte	
 
-	pid uint16
+	pid          uint16
+	adaptationFieldControl uint8
+	adaptationFieldLength uint8
+	cc           uint8
 }
 
 func NewPacket() *Packet {
@@ -31,6 +34,11 @@ func (p *Packet) ReadPacket(buf []byte) {
 	p.pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
 }
 
+func (p *Packet) ParseHeader(buf []byte) {
+	p.pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
+	p.adaptationFieldControl = (uint8(buf[3]) & 0x30)
+	p.cc = (uint8(buf[3]) & 0x0f)		
+}
 	
 func main() {
 	flag.Parse()
@@ -58,7 +66,11 @@ func main() {
 			fmt.Errorf("error reading packet, %s", err)
 		}
 
-		p.ReadPacket(buff)
+		p.ParseHeader(buff)
+
+		if p.adaptationFieldControl != 0x01 && p.pid == 0 {
+			p.adaptationFieldLength = uint8(buff[4])
+		}
 
 		// p.pid = ((uint16(buff[1]) & 0x1f) << 8) | uint16(buff[2])
 		// cc := uint8(packet[3]) & 0xf
