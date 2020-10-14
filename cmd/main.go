@@ -29,7 +29,7 @@ type Descriptor struct {
 	descriptorContent []byte
 }
 
-type Streams struct {
+type Stream struct {
 	streamType    uint8
 	elementaryPid uint16
 	esInfoLength  uint16
@@ -47,13 +47,18 @@ type Pmt struct {
 	programInfoLength      uint16
 	
 	programDescriptors     []Descriptor
-	elementaryStreams      []Streams
+	elementaryStreams      []Stream
 	crc32                  uint32	
 }
 
 func NewPacket() *Packet {
 	p := new(Packet)
 	p.buff = make([]byte, packetSize)
+	return p
+}
+
+func NewPmt() *Pmt {
+	p := new(Pmt)
 	return p
 }
 
@@ -68,6 +73,12 @@ func (pmt *Pmt) ParsePmt(buf []byte) {
 	pmt.sectionLength = ((uint16(buf[5]) & 0x03) << 8) | uint16(buf[6])
 	pmt.pcrPid = ((uint16(buf[12]) & 0x1f) << 8) | uint16(buf[13])
 	pmt.programInfoLength = ((uint16(buf[14]) & 0x03) << 8) | uint16(buf[15])
+	for i := 0; i < 2; i++ {
+		stream := new(Stream)
+		stream.elementaryPid = ((uint16(buf[18+i*5]) & 0x3) << 8) | uint16(buf[19+i*5])
+		pmt.elementaryStreams = append(pmt.elementaryStreams, *stream)
+		println(stream.elementaryPid)
+	}
 }
 	
 func main() {
@@ -89,7 +100,8 @@ func main() {
 	packetsNum := int(stat.Size())/packetSize
 	
 	for i:=0; i<packetsNum; i++ {
-		p := NewPacket()		
+		p := NewPacket()
+		pmt := NewPmt()
 		buff := make([]byte, packetSize)
 		r, err := f.Read(buff)
 		if err != nil || r != packetSize {
@@ -97,7 +109,6 @@ func main() {
 		}
 
 		p.ParseHeader(buff)
-
 		if p.adaptationFieldControl != 0x01 && p.pid == 0 {
 			p.adaptationFieldLength = uint8(buff[4])
 		}
@@ -108,6 +119,7 @@ func main() {
 			pmtPid = ((uint16(buff[15]) & 0x1f) << 8) | uint16(buff[16])
 		} else if p.pid == pmtPid {
 			// pmt packet
+			pmt.ParsePmt(buff)
 			s1 := ((uint16(buff[18]) & 0x3) << 8) | uint16(buff[19])
 			s2 := ((uint16(buff[23]) & 0x3) << 8) | uint16(buff[24])
 			streamsPacketsCount[s1] = 0
