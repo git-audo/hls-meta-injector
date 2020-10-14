@@ -73,6 +73,7 @@ func (pmt *Pmt) ParsePmt(buf []byte) {
 	pmt.sectionLength = ((uint16(buf[5]) & 0x03) << 8) | uint16(buf[6])
 	pmt.pcrPid = ((uint16(buf[12]) & 0x1f) << 8) | uint16(buf[13])
 	pmt.programInfoLength = ((uint16(buf[14]) & 0x03) << 8) | uint16(buf[15])
+	println(stream.programInfoLength)	
 	for i := 0; i < 2; i++ {
 		stream := new(Stream)
 		stream.elementaryPid = ((uint16(buf[18+i*5]) & 0x3) << 8) | uint16(buf[19+i*5])
