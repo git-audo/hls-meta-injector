@@ -23,21 +23,51 @@ type Packet struct {
 	cc           uint8
 }
 
+type Descriptor struct {
+	descriptorTag uint8
+	descriptorLength uint8
+	descriptorContent []byte
+}
+
+type Streams struct {
+	streamType    uint8
+	elementaryPid uint16
+	esInfoLength  uint16
+	descriptorList []Descriptor
+}
+
+type Pmt struct {
+	tableID                uint8
+	sectionSyntaxIndicator uint8
+	sectionLength          uint16
+
+	programNumber          uint16
+
+	pcrPid                 uint16
+	programInfoLength      uint16
+	
+	programDescriptors     []Descriptor
+	elementaryStreams      []Streams
+	crc32                  uint32	
+}
+
 func NewPacket() *Packet {
 	p := new(Packet)
 	p.buff = make([]byte, packetSize)
 	return p
 }
 
-func (p *Packet) ReadPacket(buf []byte) {
-	p.buff = buf
-	p.pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
-}
-
 func (p *Packet) ParseHeader(buf []byte) {
 	p.pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
 	p.adaptationFieldControl = (uint8(buf[3]) & 0x30)
-	p.cc = (uint8(buf[3]) & 0x0f)		
+	p.cc = (uint8(buf[3]) & 0x0f)
+}
+
+func (pmt *Pmt) ParsePmt(buf []byte) {
+	pmt.tableID = uint8(buf[4])
+	pmt.sectionLength = ((uint16(buf[5]) & 0x03) << 8) | uint16(buf[6])
+	pmt.pcrPid = ((uint16(buf[12]) & 0x1f) << 8) | uint16(buf[13])
+	pmt.programInfoLength = ((uint16(buf[14]) & 0x03) << 8) | uint16(buf[15])
 }
 	
 func main() {
@@ -71,9 +101,6 @@ func main() {
 		if p.adaptationFieldControl != 0x01 && p.pid == 0 {
 			p.adaptationFieldLength = uint8(buff[4])
 		}
-
-		// p.pid = ((uint16(buff[1]) & 0x1f) << 8) | uint16(buff[2])
-		// cc := uint8(packet[3]) & 0xf
 
 		if p.pid == 0 {
 			// pat packet
