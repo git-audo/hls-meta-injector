@@ -69,16 +69,19 @@ func (p *Packet) ParseHeader(buf []byte) {
 }
 
 func (pmt *Pmt) ParsePmt(buf []byte) {
-	pmt.tableID = uint8(buf[4])
-	pmt.sectionLength = ((uint16(buf[5]) & 0x03) << 8) | uint16(buf[6])
+	pmt.tableID = uint8(buf[5])
+	pmt.sectionLength = ((uint16(buf[6]) & 0x03) << 8) | uint16(buf[7])
 	pmt.pcrPid = ((uint16(buf[12]) & 0x1f) << 8) | uint16(buf[13])
-	pmt.programInfoLength = ((uint16(buf[14]) & 0x03) << 8) | uint16(buf[15])
-	println(stream.programInfoLength)	
-	for i := 0; i < 2; i++ {
+	pmt.programInfoLength = ((uint16(buf[15]) & 0x03) << 8) | uint16(buf[16])
+	remainingBytes := int32(pmt.sectionLength - 13)
+	for i:=0 ; remainingBytes > 0 ; i++ {
 		stream := new(Stream)
+		stream.streamType = uint8(buf[17])
 		stream.elementaryPid = ((uint16(buf[18+i*5]) & 0x3) << 8) | uint16(buf[19+i*5])
+		stream.esInfoLength = ((uint16(buf[20+i*5]) & 0x3) << 8) | uint16(buf[21+i*5])
 		pmt.elementaryStreams = append(pmt.elementaryStreams, *stream)
 		println(stream.elementaryPid)
+		remainingBytes = remainingBytes - 5 - int32(stream.esInfoLength)
 	}
 }
 	
