@@ -1,21 +1,21 @@
 package main
 
 import (
-	"os"
-	"fmt"
 	"flag"
+	"fmt"
+	"os"
 
 	"./parser"
 )
 
 var (
-	verbose = flag.Bool("v", false, "show fragment file informations")
+	verbose  = flag.Bool("v", false, "show fragment file informations")
 	filename = flag.String("i", "", "input fragment file")
 )
-	
+
 func main() {
 	flag.Parse()
-	
+
 	f, err := os.Open(*filename)
 	if err != nil {
 		fmt.Errorf("error opening file, %s", err)
@@ -28,9 +28,9 @@ func main() {
 
 	var pmtPid uint16
 
-	packetsNum := int(stat.Size())/parser.PacketSize
-	
-	for i:=0; i<packetsNum; i++ {
+	packetsNum := int(stat.Size()) / parser.PacketSize
+
+	for i := 0; i < packetsNum; i++ {
 		p := parser.NewPacket()
 		pmt := parser.NewPmt()
 		buff := make([]byte, parser.PacketSize)
@@ -55,12 +55,15 @@ func main() {
 		}
 	}
 
+	s := parser.NewStream(102, 12)
+	println(s)
+	
 	/*
-	if *verbose {
-	fmt.Println(" Total number of packets", packetsNum)
-		for k, v := range streamsPacketsCount {
-			fmt.Printf(" stream %v packets %v\n", k, v)
+		if *verbose {
+		fmt.Println(" Total number of packets", packetsNum)
+			for k, v := range streamsPacketsCount {
+				fmt.Printf(" stream %v packets %v\n", k, v)
+			}
 		}
-	}
-*/
+	*/
 }

@@ -52,6 +52,13 @@ func NewPmt() *Pmt {
 	return p
 }
 
+func NewStream(st uint8, epid uint16) *Stream {
+	s := new(Stream)
+	s.streamType = st
+	s.elementaryPid = epid
+	return s
+}
+
 func (p *Packet) ParseHeader(buf []byte) {
 	p.pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
 	p.adaptationFieldControl = (uint8(buf[3]) & 0x30)
