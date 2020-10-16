@@ -50,13 +50,11 @@ func main() {
 		} else if p.Pid() == pmtPid {
 			// pmt packet
 			pmt.ParsePmt(buff)
+			pmt.NewMetaStream(102)
 		} else {
 			// pes packet
 		}
 	}
-
-	s := parser.NewStream(102, 12)
-	println(s)
 	
 	/*
 		if *verbose {

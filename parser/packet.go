@@ -13,17 +13,17 @@ type Packet struct {
 	cc           uint8
 }
 
-type Descriptor struct {
-	descriptorTag uint8
-	descriptorLength uint8
-	descriptorContent []byte
-}
+// type Descriptor struct {
+// 	descriptorTag uint8
+// 	descriptorLength uint8
+// 	descriptorContent []byte
+// }
 
 type Stream struct {
 	streamType    uint8
 	elementaryPid uint16
 	esInfoLength  uint16
-	descriptorList []Descriptor
+	descriptorList []byte
 }
 
 type Pmt struct {
@@ -36,7 +36,7 @@ type Pmt struct {
 	pcrPid                 uint16
 	programInfoLength      uint16
 	
-	programDescriptors     []Descriptor
+	programDescriptors     []byte
 	elementaryStreams      []Stream
 	crc32                  uint32	
 }
@@ -52,11 +52,15 @@ func NewPmt() *Pmt {
 	return p
 }
 
-func NewStream(st uint8, epid uint16) *Stream {
+func (pmt *Pmt) NewMetaStream(epid uint16) {
 	s := new(Stream)
-	s.streamType = st
+	s.streamType = 21
 	s.elementaryPid = epid
-	return s
+	s.esInfoLength = 15
+	s.descriptorList = []byte("FFFF49443320FF49443320000F")
+
+	pmt.elementaryStreams = append(pmt.elementaryStreams, *s)
+	println(pmt)
 }
 
 func (p *Packet) ParseHeader(buf []byte) {
