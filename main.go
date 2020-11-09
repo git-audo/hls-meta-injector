@@ -41,12 +41,12 @@ func main() {
 		p.ParseHeader(buff)
 
 		if p.Pid() == 0 {
-			// pat packet
 			pmtPid = ((uint16(buff[15]) & 0x1f) << 8) | uint16(buff[16])
+			fmt.Println("PAT packet: PMT PID", pmtPid)
 		} else if p.Pid() == pmtPid {
-			// pmt packet
 			p.ParsePmt(buff)
-			// pmt.NewMetaStream(102)
+			p.NewES(259)
+			fmt.Println("PMT packet")						
 		} else {
 			// pes packet
 		}

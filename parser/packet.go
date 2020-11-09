@@ -9,7 +9,7 @@ var (
 type Packet struct {
 	buff []byte	
 
-	header	 	Header
+	header	 	*Header
 	tableHeader *TableHeader
 	tableSyntax *TableSyntax
 	pmt			*Pmt
@@ -78,10 +78,6 @@ func NewPacket(buff []byte) *Packet {
 	return p
 }
 
-func NewPmt() *Pmt {
-	pmt := new(Pmt)
-	return pmt
-}
 /*
 func (pmt *Pmt) NewMetaElementaryStream(epid uint16) {
 	pmt.sectionLength += 20
@@ -100,10 +96,12 @@ func (pmt *Pmt) NewMetaElementaryStream(epid uint16) {
 }
 */
 func (p *Packet) ParseHeader(buf []byte) {
-	h := p.header
+	h := new(Header)
 	h.Pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
 	h.AdaptationFieldControl = (uint8(buf[3]) & 0x30)
 	h.ContinuityCounter = (uint8(buf[3]) & 0x0f)
+
+	p.header = h
 }
 
 func (p *Packet) ParsePmt(buf []byte) {
@@ -136,6 +134,14 @@ func (p *Packet) Pid() uint16 {
 	return p.header.Pid
 }
 
-func (p *Packet) Afc() uint8 {
-	return p.header.AdaptationFieldControl
+func (p *Packet) NewES(pid uint16) {
+	es := new(ElementaryStream)
+	es.StreamType = 0x15
+	es.Reserved3 = 0x7
+	es.ElementaryPid = pid
+	es.Reserved4 = 0xf
+	es.EsInfoLength = 15
+	es.Descriptors = []byte("260DFFFF49443320FF49443320000F")
+
+	p.pmt.ElementaryStreams = append(p.pmt.ElementaryStreams, *es)
 }
