@@ -38,20 +38,15 @@ func main() {
 		}
 
 		p := parser.NewPacket(buff)
-		pmt := parser.NewPmt()
-		
 		p.ParseHeader(buff)
-		// if p.Afc() != 0x01 && p.Pid() == 0 {
-		// 	p.adaptationFieldControl = uint8(buff[4])
-		// }
 
 		if p.Pid() == 0 {
 			// pat packet
 			pmtPid = ((uint16(buff[15]) & 0x1f) << 8) | uint16(buff[16])
 		} else if p.Pid() == pmtPid {
 			// pmt packet
-			pmt.ParsePmt(buff)
-			pmt.NewMetaStream(102)
+			p.ParsePmt(buff)
+			// pmt.NewMetaStream(102)
 		} else {
 			// pes packet
 		}

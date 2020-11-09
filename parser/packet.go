@@ -1,6 +1,6 @@
 package parser
 
-import "hash/crc32"
+//import "hash/crc32"
 
 var (
 	PacketSize = 188
@@ -9,8 +9,10 @@ var (
 type Packet struct {
 	buff []byte	
 
-	h	 Header
-	p	 []byte
+	header	 	Header
+	tableHeader *TableHeader
+	tableSyntax *TableSyntax
+	pmt			*Pmt
 	
 	// TODO: add adaptation field
 }
@@ -23,7 +25,9 @@ type Header struct {
 	TransportScrambling		uint8
 	AdaptationFieldControl  uint8
 	ContinuityCounter		uint8
- }
+	
+	PointerField			uint8	
+}
 
 type TableHeader struct {
 	TableId 			   uint8
@@ -33,7 +37,7 @@ type TableHeader struct {
 	SectionLengthUnused	   uint8
 	SectionLength		   uint16
 
-	SyntaxSection 		   TableSyntax
+	SyntaxSection 		   *TableSyntax
 }
 
 type TableSyntax struct {
@@ -78,7 +82,7 @@ func NewPmt() *Pmt {
 	pmt := new(Pmt)
 	return pmt
 }
-
+/*
 func (pmt *Pmt) NewMetaElementaryStream(epid uint16) {
 	pmt.sectionLength += 20
 	pmt.programInfoLength += 17
@@ -94,33 +98,44 @@ func (pmt *Pmt) NewMetaElementaryStream(epid uint16) {
 	pmt.elementaryStreams = append(pmt.elementaryStreams, *s)
 	pmt.crc32 = crc32.ChecksumIEEE([]byte("FFFFFFFF"))
 }
-
+*/
 func (p *Packet) ParseHeader(buf []byte) {
-	p.pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
-	p.adaptationFieldControl = (uint8(buf[3]) & 0x30)
-	p.cc = (uint8(buf[3]) & 0x0f)
+	h := p.header
+	h.Pid = ((uint16(buf[1]) & 0x1f) << 8) | uint16(buf[2])
+	h.AdaptationFieldControl = (uint8(buf[3]) & 0x30)
+	h.ContinuityCounter = (uint8(buf[3]) & 0x0f)
 }
 
-func (pmt *Pmt) ParsePmt(buf []byte) {
-	pmt.tableID = uint8(buf[5])
-	pmt.sectionLength = ((uint16(buf[6]) & 0x03) << 8) | uint16(buf[7])
-	pmt.pcrPid = ((uint16(buf[12]) & 0x1f) << 8) | uint16(buf[13])
-	pmt.programInfoLength = ((uint16(buf[15]) & 0x03) << 8) | uint16(buf[16])
-	remainingBytes := int32(pmt.sectionLength - 13)
+func (p *Packet) ParsePmt(buf []byte) {
+	tH := new(TableHeader)
+	tH.TableId = uint8(buf[5])
+	tH.SectionLength = ((uint16(buf[6]) & 0x03) << 8) | uint16(buf[7])
+
+	tS := new(TableSyntax)
+
+	pmt := new(Pmt)
+	pmt.PcrPid = ((uint16(buf[12]) & 0x1f) << 8) | uint16(buf[13])
+	pmt.ProgramInfoLength = ((uint16(buf[15]) & 0x03) << 8) | uint16(buf[16])
+
+	remainingBytes := int32(tH.SectionLength - 13)
 	for i:=0 ; remainingBytes > 0 ; i++ {
-		stream := new(ElementaryStream)
-		stream.streamType = uint8(buf[17])
-		stream.elementaryPid = ((uint16(buf[18+i*5]) & 0x3) << 8) | uint16(buf[19+i*5])
-		stream.esInfoLength = ((uint16(buf[20+i*5]) & 0x3) << 8) | uint16(buf[21+i*5])
-		pmt.elementaryStreams = append(pmt.elementaryStreams, *stream)
-		remainingBytes = remainingBytes - 5 - int32(stream.esInfoLength)
+		es := new(ElementaryStream)
+		es.StreamType = uint8(buf[17])
+		es.ElementaryPid = ((uint16(buf[18+i*5]) & 0x3) << 8) | uint16(buf[19+i*5])
+		es.EsInfoLength = ((uint16(buf[20+i*5]) & 0x3) << 8) | uint16(buf[21+i*5])
+		pmt.ElementaryStreams = append(pmt.ElementaryStreams, *es)
+		remainingBytes = remainingBytes - 5 - int32(es.EsInfoLength)
 	}
+
+	p.tableHeader = tH
+	p.tableSyntax = tS
+	p.pmt = pmt
 }
 
 func (p *Packet) Pid() uint16 {
-	return p.pid
+	return p.header.Pid
 }
 
 func (p *Packet) Afc() uint8 {
-	return p.adaptationFieldControl
+	return p.header.AdaptationFieldControl
 }
