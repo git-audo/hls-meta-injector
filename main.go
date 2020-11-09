@@ -31,14 +31,15 @@ func main() {
 	packetsNum := int(stat.Size()) / parser.PacketSize
 
 	for i := 0; i < packetsNum; i++ {
-		p := parser.NewPacket()
-		pmt := parser.NewPmt()
 		buff := make([]byte, parser.PacketSize)
 		r, err := f.Read(buff)
 		if err != nil || r != parser.PacketSize {
 			fmt.Errorf("error reading packet, %s", err)
 		}
 
+		p := parser.NewPacket(buff)
+		pmt := parser.NewPmt()
+		
 		p.ParseHeader(buff)
 		// if p.Afc() != 0x01 && p.Pid() == 0 {
 		// 	p.adaptationFieldControl = uint8(buff[4])
