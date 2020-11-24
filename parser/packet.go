@@ -7,52 +7,52 @@ var (
 )
 
 type Packet struct {
-	buff []byte	
+	buff	    []byte	
 
-	header	 	*Header
+	header	    *Header
 	tableHeader *TableHeader
 	tableSyntax *TableSyntax
-	pmt			*Pmt
+	pmt	    *Pmt
 	
 	// TODO: add adaptation field
 }
 
 type Header struct {
 	TransportErrorIndicator bool
-	PayloadUnitStart		bool
-	TransportPriority		bool
-	Pid 					uint16
-	TransportScrambling		uint8
+	PayloadUnitStart	bool
+	TransportPriority	bool
+	Pid 			uint16
+	TransportScrambling	uint8
 	AdaptationFieldControl  uint8
-	ContinuityCounter		uint8
+	ContinuityCounter	uint8
 	
-	PointerField			uint8	
+	PointerField		uint8	
 }
 
 type TableHeader struct {
-	TableId 			   uint8
+	TableId 	       uint8
 	SectionSyntaxIndicator bool
-	Private				   bool
-	Reserved			   uint8
-	SectionLengthUnused	   uint8
-	SectionLength		   uint16
+	Private	      	       bool
+	Reserved  	       uint8
+	SectionLengthUnused    uint8
+	SectionLength	       uint16
 
-	SyntaxSection 		   *TableSyntax
+	SyntaxSection 	       *TableSyntax
 }
 
 type TableSyntax struct {
 	TableIdExtension  uint16
-	Reserved		  uint8
+	Reserved 	  uint8
 	VersionNumber	  uint8
-	Indicator		  bool
+	Indicator	  bool
 	SectionNumber	  uint8
 	LastSectionNumber uint8
 }
 
 type Pmt struct {
-	Reserved2				uint8
+	Reserved2		uint8
 	PcrPid                  uint16
-	Reserved3				uint8
+	Reserved3		uint8
 	ProgramInfoLengthUnused uint8
 	ProgramInfoLength       uint16
 	
@@ -63,9 +63,9 @@ type Pmt struct {
 
 type ElementaryStream struct {
 	StreamType     	   uint8
-	Reserved3	       uint8
+	Reserved3	   uint8
 	ElementaryPid  	   uint16
-	Reserved4	   	   uint8
+	Reserved4 	   uint8
 	EsInfoLengthUnused uint8
 	EsInfoLength	   uint16
 	Descriptors 	   []byte
